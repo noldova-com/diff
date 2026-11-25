@@ -1,0 +1,26 @@
+{
+  "name": "@noldova/diff",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "npm@11.20.0",
+  "engines": {
+    "node": "26.13.1",
+    "npm": "11.20.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "test": "node scripts/test.ts",
+    "test:timing": "node scripts/test-timing.ts"
+  },
+  "devDependencies": {
+    "@noldova/context.collections": "0.0.12",
+    "@noldova/context.core": "0.0.12",
+    "@noldova/context.exceptions": "0.0.12",
+    "@noldova/context.testing": "0.0.12",
+    "@noldova/context.text": "0.0.12",
+    "@types/node": "26.6.6",
+    "typescript": "7.0.2"
+  },
+  "version": "0.0.0"
+}

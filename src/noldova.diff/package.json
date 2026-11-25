@@ -1,0 +1,26 @@
+{
+  "name": "@noldova/diff",
+  "version": "__VERSION__",
+  "description": "Line and character diffs and a 3-way merge of line sequences, framework-free, for diff and merge views such as the code editor's.",
+  "type": "module",
+  "main": "api/index.js",
+  "types": "api/index.d.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noldova-com/diff.git",
+    "directory": "src/noldova.diff"
+  },
+  "homepage": "https://github.com/noldova-com/diff#readme",
+  "bugs": {
+    "url": "https://github.com/noldova-com/diff/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "peerDependencies": {
+    "@noldova/context.core": ">=0.0.12 <0.1.0",
+    "@noldova/context.exceptions": ">=0.0.12 <0.1.0"
+  }
+}
