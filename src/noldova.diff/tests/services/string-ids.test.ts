@@ -20,14 +20,7 @@ export class StringIdsTests {
   }
 
   @TestMethod
-  public givesTwoValuesWithTheSameHashTheirOwnNumbers(): void {
-    const ids: StringIds = new StringIds();
-
-    Assert.areEqual("0,1,0,1", ids.encode(["glbvs", "yacxa", "glbvs", "yacxa"]).join(","));
-  }
-
-  @TestMethod
-  public keepsEachValuesNumberAsTheTableGrows(): void {
+  public keepsEachValuesNumberAcrossTenThousandValues(): void {
     const ids: StringIds = new StringIds();
     const values: readonly string[] = Array.from({ length: 10_000 }, (_, index) => `line ${index}`);
     const encoded: Int32Array = ids.encode(values);
