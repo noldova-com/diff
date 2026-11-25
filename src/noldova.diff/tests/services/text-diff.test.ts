@@ -17,6 +17,15 @@ const RANDOM_RANGE: number = 2_147_483_648;
 @TestClass
 export class TextDiffTests {
   @TestMethod
+  public numbersValuesInOrderExtendingTheNumbersTheMapHolds(): void {
+    const ids: Map<string, number> = new Map<string, number>();
+
+    Assert.areEqual("0,1,0", TextDiff.encode(["a", "b", "a"], ids).join(","));
+    Assert.areEqual("1,2", TextDiff.encode(["b", "c"], ids).join(","));
+    Assert.areEqual(3, ids.size);
+  }
+
+  @TestMethod
   public findsNoChangeBetweenEqualTexts(): void {
     Assert.areEqual(0, TextDiff.lines(["a", "b"], ["a", "b"]).length);
     Assert.areEqual(0, TextDiff.lines([], []).length);

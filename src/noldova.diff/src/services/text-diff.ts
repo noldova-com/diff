@@ -10,14 +10,15 @@ import "@noldova/context.core";
 
 import { DiffChange } from "../models/diff-change.js";
 import { SequenceDiff } from "./sequence-diff.js";
+import { StringIds } from "./string-ids.js";
 
 export class TextDiff {
   private static readonly WORD_DIFF_LENGTH: number = 2048;
   private static readonly WORD: RegExp = /[\p{L}\p{N}_]+|[\s\S]/gu;
 
   public static lines(original: readonly string[], modified: readonly string[]): readonly DiffChange[] {
-    const ids: Map<string, number> = new Map<string, number>();
-    return SequenceDiff.compute(TextDiff.encode(original, ids), TextDiff.encode(modified, ids));
+    const ids: StringIds = new StringIds();
+    return SequenceDiff.compute(ids.encode(original), ids.encode(modified));
   }
 
   public static characters(original: string, modified: string): readonly DiffChange[] {
@@ -27,8 +28,8 @@ export class TextDiff {
     const modifiedWords: readonly string[] = modified.match(TextDiff.WORD) ?? [];
     const originalOffsets: readonly number[] = TextDiff.offsets(originalWords);
     const modifiedOffsets: readonly number[] = TextDiff.offsets(modifiedWords);
-    const ids: Map<string, number> = new Map<string, number>();
-    return SequenceDiff.compute(TextDiff.encode(originalWords, ids), TextDiff.encode(modifiedWords, ids)).flatMap(t => {
+    const ids: StringIds = new StringIds();
+    return SequenceDiff.compute(ids.encode(originalWords), ids.encode(modifiedWords)).flatMap(t => {
       const originalStart: number = TextDiff.offsetAt(originalOffsets, t.originalStart);
       const modifiedStart: number = TextDiff.offsetAt(modifiedOffsets, t.modifiedStart);
       return TextDiff.points(original.slice(originalStart, TextDiff.offsetAt(originalOffsets, t.originalEnd)),
@@ -54,8 +55,8 @@ export class TextDiff {
     const modifiedPoints: readonly string[] = Array.from(modified);
     const originalOffsets: readonly number[] = TextDiff.offsets(originalPoints);
     const modifiedOffsets: readonly number[] = TextDiff.offsets(modifiedPoints);
-    const ids: Map<string, number> = new Map<string, number>();
-    return SequenceDiff.compute(TextDiff.encode(originalPoints, ids), TextDiff.encode(modifiedPoints, ids)).map(t => new DiffChange(
+    const ids: StringIds = new StringIds();
+    return SequenceDiff.compute(ids.encode(originalPoints), ids.encode(modifiedPoints)).map(t => new DiffChange(
       originalBase + TextDiff.offsetAt(originalOffsets, t.originalStart),
       originalBase + TextDiff.offsetAt(originalOffsets, t.originalEnd),
       modifiedBase + TextDiff.offsetAt(modifiedOffsets, t.modifiedStart),

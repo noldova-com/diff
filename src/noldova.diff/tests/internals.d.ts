@@ -13,3 +13,9 @@ declare module "@noldova/diff/services/sequence-diff.js" {
     public static compute(original: Int32Array, modified: Int32Array): readonly DiffChange[];
   }
 }
+
+declare module "@noldova/diff/services/string-ids.js" {
+  export class StringIds {
+    public encode(values: readonly string[]): Int32Array;
+  }
+}

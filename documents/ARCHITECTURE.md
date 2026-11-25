@@ -26,7 +26,10 @@ The tests count the work rather than time it, so a slower or busier machine can'
 
 - A line diff of two 100,000-line texts with scattered changes reads each line about twice, and no more often per line than in texts half as long: `TextDiffTests.diffsTwo100000LineTextsWithScatteredChangesReadingEachLineAFewTimesNoMoreOftenThanInTextsHalfAsLong`.
 - A merge of three such texts reads each line about three times, by the same bound: `Merge3Tests.mergesThree100000LineTextsWithScatteredChangesReadingEachLineAFewTimesNoMoreOftenThanInTextsHalfAsLong`.
-- Each test counts the reads of the line arrays the diff takes, allows under 10 reads per line, and fails when the reads per line grow by more than a quarter from the half-length texts to the full ones.
+- A line diff of two 5,000-line texts over a few repeated lines, with half the lines changed, reads each line under 400 times, and no more often per line than in texts half as long: `TextDiffTests.diffsRepetitiveTextsWithHalfTheirLinesChangedValidlyReadingEachLineNoMoreOftenThanInTextsHalfAsLong`.
+- A character diff of two 50,000-character lines with many changed characters reads each character under 100 times, by the same bound: `TextDiffTests.diffsALongLineWithManyChangedCharactersValidlyReadingEachCharacterNoMoreOftenThanInALineHalfAsLong`.
+- Each test counts the reads of the arrays the diff takes, allows under 10 reads per line for scattered changes, and fails when the reads per item grow by more than a quarter from the half-length texts to the full ones.
+- Diffs whose search the cost cap ends stay valid: applying the changes to the original gives the modified text, by `TextDiffTests.keepsDiffsOfRandomTextsValidOnceTheCostCapEndsTheSearch`.
 
 ## Testing
 
@@ -37,4 +40,8 @@ The tests count the work rather than time it, so a slower or busier machine can'
 
 - **Myers with patience anchors.** `TextDiff.lines` and `TextDiff.characters` give the shortest edit by Myers' linear-space algorithm.
   A region over 2,048 lines first splits at lines that occur once on each side, in their longest common order, as patience diff does, so a 100,000-line diff stays near-linear, at the cost of a shortest edit for such regions.
+- **A cost cap.** A bisect that hasn't met its other half after 256 rounds splits at the point either search reached furthest, so texts with many changes stay near-linear, at the cost of a shortest edit for such regions; the changes still turn the original into the modified text.
+  The regions are diffed from a work list rather than by recursion, so a long text can't overflow the stack, and a region a bisect made doesn't look for anchors again.
+- **Typed-array counts.** The anchor pass counts lines in `Int32Array`s indexed by line id, cleared by a generation stamp rather than refilled, instead of in maps.
+- **Words first.** `TextDiff.characters` diffs texts over 2,048 characters by words, runs of letters, digits and underscores, and the single characters between them, then each changed span by character, so a long line with many changes costs about as much as its changed words.
 - **Its own package.** Diff and 3-way merge are general capabilities with no editor types, so they live in their own repository and package, which an app or editor installs from npm, pinned exactly.

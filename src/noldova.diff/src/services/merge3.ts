@@ -12,14 +12,14 @@ import { MergeRegionKind } from "../enums/merge-region-kind.js";
 import { MergeRegion } from "../models/merge-region.js";
 import { SideChange } from "../models/side-change.js";
 import { SequenceDiff } from "./sequence-diff.js";
-import { TextDiff } from "./text-diff.js";
+import { StringIds } from "./string-ids.js";
 
 export class Merge3 {
   public static lines(base: readonly string[], ours: readonly string[], theirs: readonly string[]): readonly MergeRegion[] {
-    const ids: Map<string, number> = new Map<string, number>();
-    const baseIds: Int32Array = TextDiff.encode(base, ids);
-    const oursIds: Int32Array = TextDiff.encode(ours, ids);
-    const theirsIds: Int32Array = TextDiff.encode(theirs, ids);
+    const ids: StringIds = new StringIds();
+    const baseIds: Int32Array = ids.encode(base);
+    const oursIds: Int32Array = ids.encode(ours);
+    const theirsIds: Int32Array = ids.encode(theirs);
     const changes: readonly SideChange[] = [
       ...SequenceDiff.compute(baseIds, oursIds).map(t => new SideChange(t, true)),
       ...SequenceDiff.compute(baseIds, theirsIds).map(t => new SideChange(t, false))
