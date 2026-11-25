@@ -77,6 +77,36 @@ export class TextDiffTests {
   }
 
   @TestMethod
+  public diffsRepetitiveTextsWithHalfTheirLinesChangedValidlyReadingEachLineNoMoreOftenThanInTextsHalfAsLong(): void {
+    const half: number = TextDiffTests.repetitiveReadsPerLine(5_000);
+    const full: number = TextDiffTests.repetitiveReadsPerLine(10_000);
+
+    Assert.isTrue(full < 400, `The diff read each line ${full.toFixed(2)} times.`);
+    Assert.isTrue(full < half * 1.25, `The diff read each line ${half.toFixed(2)} times at 5,000 lines and ${full.toFixed(2)} times at 10,000.`);
+  }
+
+  @TestMethod
+  public diffsALongLineWithManyChangedCharactersValidlyReadingEachCharacterNoMoreOftenThanInALineHalfAsLong(): void {
+    const half: number = TextDiffTests.characterReadsPerCharacter(25_000);
+    const full: number = TextDiffTests.characterReadsPerCharacter(50_000);
+
+    Assert.isTrue(full < 100, `The diff read each character ${full.toFixed(2)} times.`);
+    Assert.isTrue(full < half * 1.25, `The diff read each character ${half.toFixed(2)} times at 25,000 and ${full.toFixed(2)} times at 50,000.`);
+  }
+
+  @TestMethod
+  public keepsDiffsOfRandomTextsValidOnceTheCostCapEndsTheSearch(): void {
+    const random: Random = new Random(23);
+    for (let round = 0; round < 6; round++) {
+      const original: readonly string[] = Array.from({ length: 1500 + random.next(1500) }, () => String(random.next(3)));
+      const modified: readonly string[] = Array.from({ length: 1500 + random.next(1500) }, () => String(random.next(3)));
+      const changes: readonly DiffChange[] = TextDiff.lines(original, modified);
+      Assert.areEqual(modified.join("\n"), TextDiffTests.applied(original, modified, changes).join("\n"));
+      changes.slice(1).forEach((change, index) => Assert.isTrue((changes[index]?.originalEnd ?? -1) < change.originalStart));
+    }
+  }
+
+  @TestMethod
   public givesCharacterChangesAsUtf16OffsetsThatNeverSplitASurrogatePair(): void {
     const changes: readonly DiffChange[] = TextDiff.characters("a\u{1F600}b c", "a\u{1F601}b d");
 
@@ -124,6 +154,27 @@ export class TextDiffTests {
     Assert.areEqual(modified.join("\n"), TextDiffTests.applied(original, modified, changes).join("\n"));
     Assert.isTrue(changes.length > count / 100);
     Assert.isTrue(counter.reads >= original.length + modified.length, `The diff read ${counter.reads} lines of ${original.length + modified.length}.`);
+    return counter.reads / (original.length + modified.length);
+  }
+
+  private static repetitiveReadsPerLine(count: number): number {
+    const random: Random = new Random(7);
+    const original: readonly string[] = Array.from({ length: count }, (_, i) => `item${i % 10}`);
+    const modified: readonly string[] = original.map(t => random.next(2) === 0 ? `other${random.next(10)}` : t);
+    const counter: ReadCounter = new ReadCounter();
+    const changes: readonly DiffChange[] = counter.diffsOf(() => TextDiff.lines(original, modified));
+    Assert.areEqual(modified.join("\n"), TextDiffTests.applied(original, modified, changes).join("\n"));
+    return counter.reads / (original.length + modified.length);
+  }
+
+  private static characterReadsPerCharacter(count: number): number {
+    const random: Random = new Random(9);
+    const letters: string = "abcdefghijklmnopqrstuvwxyz ";
+    const original: string = Array.from({ length: count }, () => letters[random.next(letters.length)]).join("");
+    const modified: string = Array.from(original, t => random.next(100) === 0 ? "#" : t).join("");
+    const counter: ReadCounter = new ReadCounter();
+    const changes: readonly DiffChange[] = counter.diffsOf(() => TextDiff.characters(original, modified));
+    Assert.areEqual(modified, TextDiffTests.applied([...original], [...modified], changes).join(""));
     return counter.reads / (original.length + modified.length);
   }
 
