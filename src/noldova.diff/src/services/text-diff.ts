@@ -12,22 +12,28 @@ import { DiffChange } from "../models/diff-change.js";
 import { SequenceDiff } from "./sequence-diff.js";
 
 export class TextDiff {
+  private static readonly WORD_DIFF_LENGTH: number = 2048;
+  private static readonly WORD: RegExp = /[\p{L}\p{N}_]+|[\s\S]/gu;
+
   public static lines(original: readonly string[], modified: readonly string[]): readonly DiffChange[] {
     const ids: Map<string, number> = new Map<string, number>();
     return SequenceDiff.compute(TextDiff.encode(original, ids), TextDiff.encode(modified, ids));
   }
 
   public static characters(original: string, modified: string): readonly DiffChange[] {
-    const originalPoints: readonly string[] = Array.from(original);
-    const modifiedPoints: readonly string[] = Array.from(modified);
-    const originalOffsets: readonly number[] = TextDiff.offsets(originalPoints);
-    const modifiedOffsets: readonly number[] = TextDiff.offsets(modifiedPoints);
+    if (original.length + modified.length <= TextDiff.WORD_DIFF_LENGTH)
+      return TextDiff.points(original, modified, 0, 0);
+    const originalWords: readonly string[] = original.match(TextDiff.WORD) ?? [];
+    const modifiedWords: readonly string[] = modified.match(TextDiff.WORD) ?? [];
+    const originalOffsets: readonly number[] = TextDiff.offsets(originalWords);
+    const modifiedOffsets: readonly number[] = TextDiff.offsets(modifiedWords);
     const ids: Map<string, number> = new Map<string, number>();
-    return SequenceDiff.compute(TextDiff.encode(originalPoints, ids), TextDiff.encode(modifiedPoints, ids)).map(t => new DiffChange(
-      TextDiff.offsetAt(originalOffsets, t.originalStart),
-      TextDiff.offsetAt(originalOffsets, t.originalEnd),
-      TextDiff.offsetAt(modifiedOffsets, t.modifiedStart),
-      TextDiff.offsetAt(modifiedOffsets, t.modifiedEnd)));
+    return SequenceDiff.compute(TextDiff.encode(originalWords, ids), TextDiff.encode(modifiedWords, ids)).flatMap(t => {
+      const originalStart: number = TextDiff.offsetAt(originalOffsets, t.originalStart);
+      const modifiedStart: number = TextDiff.offsetAt(modifiedOffsets, t.modifiedStart);
+      return TextDiff.points(original.slice(originalStart, TextDiff.offsetAt(originalOffsets, t.originalEnd)),
+        modified.slice(modifiedStart, TextDiff.offsetAt(modifiedOffsets, t.modifiedEnd)), originalStart, modifiedStart);
+    });
   }
 
   public static encode(values: readonly string[], ids: Map<string, number>): Int32Array {
@@ -41,6 +47,19 @@ export class TextDiff {
       encoded[index] = id;
     });
     return encoded;
+  }
+
+  private static points(original: string, modified: string, originalBase: number, modifiedBase: number): readonly DiffChange[] {
+    const originalPoints: readonly string[] = Array.from(original);
+    const modifiedPoints: readonly string[] = Array.from(modified);
+    const originalOffsets: readonly number[] = TextDiff.offsets(originalPoints);
+    const modifiedOffsets: readonly number[] = TextDiff.offsets(modifiedPoints);
+    const ids: Map<string, number> = new Map<string, number>();
+    return SequenceDiff.compute(TextDiff.encode(originalPoints, ids), TextDiff.encode(modifiedPoints, ids)).map(t => new DiffChange(
+      originalBase + TextDiff.offsetAt(originalOffsets, t.originalStart),
+      originalBase + TextDiff.offsetAt(originalOffsets, t.originalEnd),
+      modifiedBase + TextDiff.offsetAt(modifiedOffsets, t.modifiedStart),
+      modifiedBase + TextDiff.offsetAt(modifiedOffsets, t.modifiedEnd)));
   }
 
   private static offsets(points: readonly string[]): readonly number[] {
