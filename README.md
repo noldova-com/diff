@@ -69,8 +69,8 @@ Test files slower than the timing check's budget:
 
 | File | Time | Why |
 |---|---|---|
-| `noldova.diff/services/text-diff-timing.test.js` | 4600 ms | Its timing tests diff a million lines, 5 million characters and 100,000 repetitive lines each bounded by a ratio to a reference work of built-ins over 1,000,000 lines timed just before it, to bound the diff's time and its cost cap, and a 100,000-word text with moved blocks to count the words-first pass's changes. |
-| `noldova.diff/services/merge3-timing.test.js` | 3100 ms | Its timing test merges three million-line texts to bound the merge's time by a ratio to the same reference work. |
+| `noldova.diff/services/text-diff-timing.test.js` | 8300 ms | Its timing tests diff a million lines, 5 million characters and 100,000 repetitive lines each bounded by a ratio to a reference work of built-ins over 1,000,000 lines timed just before it, to bound the diff's time and its cost cap, and a 100,000-word text with moved blocks to count the words-first pass's changes. |
+| `noldova.diff/services/merge3-timing.test.js` | 4600 ms | Its timing test merges three million-line texts to bound the merge's time by a ratio to the same reference work. |
 
 ## Releases
 
