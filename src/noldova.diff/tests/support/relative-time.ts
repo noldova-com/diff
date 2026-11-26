@@ -39,6 +39,6 @@ export class RelativeTime<T> {
   }
 
   public format(name: string): string {
-    return `The ${name} took ${Math.round(this.milliseconds)} ms, ${this.ratio.toFixed(1)} times the reference diff's ${Math.round(this.referenceMilliseconds)} ms`;
+    return `The ${name} took ${Math.round(this.milliseconds)} ms, ${this.ratio.toFixed(1)} times the reference work's ${Math.round(this.referenceMilliseconds)} ms`;
   }
 }

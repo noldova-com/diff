@@ -10,17 +10,17 @@ import { Assert, TestClass, TestMethod } from "@noldova/context.testing";
 import { Merge3, type MergeRegion } from "@noldova/diff";
 
 import { LargeTexts } from "../support/large-texts.js";
-import { ReferenceDiff } from "../support/reference-diff.js";
+import { ReferenceWork } from "../support/reference-work.js";
 import { RelativeTime } from "../support/relative-time.js";
 
 @TestClass
 export class Merge3TimingTests {
   private static readonly MERGE_RATIO: number = 50;
-  private static readonly WHY: string = "a timing test, bounded by a ratio to a 250,000-line reference diff of unique lines, timed just before it in the same process, so the runner's speed cancels out; the bound is the slowest ratio in several runs on each test machine, Linux, macOS x64 and Windows, times three, a margin for a CI runner whose other test files share its cores";
+  private static readonly WHY: string = "a timing test, bounded by a ratio to a reference work of the language's built-ins over 1,000,000 lines, a Map of them and a sorted copy, which runs no diff code, timed just before it in the same process, so the runner's speed cancels out; the bound is the slowest ratio in several runs on each test machine, Linux, macOS x64 and Windows, times three, a margin for a CI runner whose other test files share its cores";
 
   @TestMethod
-  public mergesThree1000000LineTextsWithScatteredChangesWithinARatioToTheTimeOfTheReferenceDiff(): void {
-    const reference: ReferenceDiff = new ReferenceDiff();
+  public mergesThree1000000LineTextsWithScatteredChangesWithinARatioToTheTimeOfTheReferenceWork(): void {
+    const reference: ReferenceWork = new ReferenceWork();
     const base: readonly string[] = LargeTexts.uniqueLines(1_000_000);
     const ours: readonly string[] = LargeTexts.scattered(base, 0.001, 1, "ours");
     const theirs: readonly string[] = LargeTexts.scattered(base, 0.001, 2, "theirs");
