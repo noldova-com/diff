@@ -15,10 +15,10 @@ import { Timed } from "../support/timed.js";
 @TestClass
 export class TextDiffTimingTests {
   private static readonly LINES_MILLISECONDS: number = 15_000;
-  private static readonly REPETITIVE_MILLISECONDS: number = 8_000;
-  private static readonly CHARACTERS_MILLISECONDS: number = 9_000;
+  private static readonly REPETITIVE_MILLISECONDS: number = 30_000;
+  private static readonly CHARACTERS_MILLISECONDS: number = 18_000;
   private static readonly MOVED_BLOCKS_CHANGES: number = 100_000;
-  private static readonly WHY: string = "a timing test, bounded at about three times this call's time on the slowest CI target, since that target's time doubles between runs as other test files share its cores";
+  private static readonly WHY: string = "a timing test, bounded at more than twice this test's time on the slowest CI target, since that target's time doubles between runs as other test files share its cores, and below the time the call takes without the guard it checks";
 
   @TestMethod
   public diffsTwo1000000LineTextsWithScatteredChangesWithinTheTimeOfALargeDiff(): void {

@@ -15,7 +15,7 @@ import { Timed } from "../support/timed.js";
 @TestClass
 export class Merge3TimingTests {
   private static readonly MERGE_MILLISECONDS: number = 46_000;
-  private static readonly WHY: string = "a timing test, bounded at about three times this call's time on the slowest CI target, since that target's time doubles between runs as other test files share its cores";
+  private static readonly WHY: string = "a timing test, bounded at about twice this test's time on the slowest CI target, the most the suite's hang limit leaves room for";
 
   @TestMethod
   public mergesThree1000000LineTextsWithScatteredChangesWithinTheTimeOfALargeMerge(): void {
