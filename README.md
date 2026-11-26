@@ -58,7 +58,7 @@ npm test -- --skip-test-details --skip-coverage-details
 - `--skip-test-details` hides the line of each passing test; failures, skipped tests and the totals still print.
 - `--skip-coverage-details` hides the coverage rows of fully covered files; files with gaps and the overall row still print.
 
-The suite has one hang limit, 120 seconds, which `scripts/suite-script.ts` sets for every run of it; no test carries a limit of its own. It is at least three times the slowest test's slowest run on main, the million-line merge's 39.9 seconds on macOS x64 in run 45881050586.
+The suite has one hang limit, 150 seconds, which `scripts/suite-script.ts` sets for every run of it; no test carries a limit of its own. It is at least three times the slowest test's slowest run on main, the million-line merge's 46.4 seconds on macOS x64 in run 45883173003.
 
 ## Checks
 
