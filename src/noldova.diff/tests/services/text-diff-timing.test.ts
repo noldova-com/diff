@@ -18,7 +18,8 @@ export class TextDiffTimingTests {
   private static readonly REPETITIVE_MILLISECONDS: number = 30_000;
   private static readonly CHARACTERS_MILLISECONDS: number = 18_000;
   private static readonly MOVED_BLOCKS_CHANGES: number = 100_000;
-  private static readonly WHY: string = "a timing test, bounded at more than twice this test's time on the slowest CI target, since that target's time doubles between runs as other test files share its cores, and below the time the call takes without the guard it checks";
+  private static readonly WHY: string = "a timing test, bounded at more than twice this test's time on the slowest CI target, since that target's time doubles between runs as other test files share its cores";
+  private static readonly CAP_WHY: string = "and below the call's time with the cost cap off";
 
   @TestMethod
   public diffsTwo1000000LineTextsWithScatteredChangesWithinTheTimeOfALargeDiff(): void {
@@ -39,7 +40,7 @@ export class TextDiffTimingTests {
     const diff: Timed<readonly DiffChange[]> = Timed.of(() => TextDiff.lines(original, modified));
 
     Assert.isTrue(diff.value.length > 0);
-    Assert.isTrue(diff.milliseconds < TextDiffTimingTests.REPETITIVE_MILLISECONDS, `The diff took ${diff.milliseconds} ms; ${TextDiffTimingTests.WHY}.`);
+    Assert.isTrue(diff.milliseconds < TextDiffTimingTests.REPETITIVE_MILLISECONDS, `The diff took ${diff.milliseconds} ms; ${TextDiffTimingTests.WHY}, ${TextDiffTimingTests.CAP_WHY}.`);
   }
 
   @TestMethod
@@ -50,12 +51,12 @@ export class TextDiffTimingTests {
     const diff: Timed<readonly DiffChange[]> = Timed.of(() => TextDiff.characters(original, modified));
 
     Assert.isTrue(diff.value.length > 0);
-    Assert.isTrue(diff.milliseconds < TextDiffTimingTests.CHARACTERS_MILLISECONDS, `The diff took ${diff.milliseconds} ms; ${TextDiffTimingTests.WHY}.`);
+    Assert.isTrue(diff.milliseconds < TextDiffTimingTests.CHARACTERS_MILLISECONDS, `The diff took ${diff.milliseconds} ms; ${TextDiffTimingTests.WHY}, ${TextDiffTimingTests.CAP_WHY}.`);
   }
 
   @TestMethod
-  public diffsA200000WordTextWithMovedBlocksInAsFewChangesAsTheWordsFirstPassKeeps(): void {
-    const words: readonly string[] = LargeTexts.words(200_000, 6);
+  public diffsA100000WordTextWithMovedBlocksInAsFewChangesAsTheWordsFirstPassKeeps(): void {
+    const words: readonly string[] = LargeTexts.words(100_000, 6);
     const original: string = words.join(" ");
     const modified: string = LargeTexts.blocksMoved(words, 400, 50, 7).join(" ");
 

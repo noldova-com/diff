@@ -6,7 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { Assert, TestClass, TestMethod } from "@noldova/context.testing";
+import { Assert, TestClass, TestMethod, Timeout } from "@noldova/context.testing";
 import { Merge3, type MergeRegion } from "@noldova/diff";
 
 import { LargeTexts } from "../support/large-texts.js";
@@ -14,10 +14,11 @@ import { Timed } from "../support/timed.js";
 
 @TestClass
 export class Merge3TimingTests {
-  private static readonly MERGE_MILLISECONDS: number = 46_000;
-  private static readonly WHY: string = "a timing test, bounded at about twice this test's time on the slowest CI target, the most the suite's hang limit leaves room for";
+  private static readonly MERGE_MILLISECONDS: number = 60_000;
+  private static readonly WHY: string = "a timing test, bounded at more than two and a half times this test's time on the slowest CI target, since that target's time doubles between runs as other test files share its cores, and under this test's own hang limit";
 
   @TestMethod
+  @Timeout(75_000)
   public mergesThree1000000LineTextsWithScatteredChangesWithinTheTimeOfALargeMerge(): void {
     const base: readonly string[] = LargeTexts.uniqueLines(1_000_000);
     const ours: readonly string[] = LargeTexts.scattered(base, 0.001, 1, "ours");

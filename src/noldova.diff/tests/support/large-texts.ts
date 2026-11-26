@@ -34,6 +34,7 @@ export class LargeTexts {
       else
         result.push(line);
     }
+
     return result;
   }
 
@@ -43,16 +44,19 @@ export class LargeTexts {
 
   public static changedHalf(lines: readonly string[], seed: number): readonly string[] {
     const random: Random = new Random(seed);
-    return lines.map(line => random.below(2) === 0 ? `    other${random.below(10)}();` : line);
+
+    return lines.map(t => random.below(2) === 0 ? `    other${random.below(10)}();` : t);
   }
 
   public static characters(count: number, seed: number): string {
     const random: Random = new Random(seed);
+
     return Array.from({ length: count }, () => LargeTexts.LETTERS.charAt(random.below(LargeTexts.LETTERS.length))).join("");
   }
 
   public static words(count: number, seed: number): readonly string[] {
     const random: Random = new Random(seed);
+
     return Array.from({ length: count }, () => Array.from({ length: 3 + random.below(6) }, () => LargeTexts.LETTERS.charAt(random.below(26))).join(""));
   }
 
@@ -71,6 +75,7 @@ export class LargeTexts {
       blocks[from] = other;
       blocks[to] = moved;
     }
+
     return blocks.flat();
   }
 
@@ -79,6 +84,7 @@ export class LargeTexts {
     const characters: string[] = text.split("");
     for (let i = 0; i < Math.floor(text.length / 100); i++)
       characters[random.below(text.length)] = LargeTexts.CHANGED_CHARACTER;
+
     return characters.join("");
   }
 }

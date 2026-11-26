@@ -18,6 +18,7 @@ export class Timed<T> {
   public static of<T>(work: () => T): Timed<T> {
     const started: number = performance.now();
     const value: T = work();
+
     return new Timed<T>(value, Math.round(performance.now() - started));
   }
 }
