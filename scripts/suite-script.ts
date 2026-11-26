@@ -11,7 +11,7 @@ import Script from "./script.ts";
 import TestProject from "./test-project.ts";
 
 export default abstract class SuiteScript extends Script {
-  protected static readonly HANG_LIMIT_MILLISECONDS: number = 75_000;
+  protected static readonly HANG_LIMIT_MILLISECONDS: number = 150_000;
   protected static readonly FILTERS_VARIABLE: string = "CONTEXT_TEST_FILTERS";
   protected static readonly RESULTS_FILE_VARIABLE: string = "CONTEXT_TEST_RESULTS_FILE";
   protected static readonly TIMEOUT_VARIABLE: string = "CONTEXT_TEST_TIMEOUT_MILLISECONDS";

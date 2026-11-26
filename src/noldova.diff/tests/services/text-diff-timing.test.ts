@@ -10,48 +10,52 @@ import { Assert, TestClass, TestMethod } from "@noldova/context.testing";
 import { type DiffChange, TextDiff } from "@noldova/diff";
 
 import { LargeTexts } from "../support/large-texts.js";
-import { Timed } from "../support/timed.js";
+import { ReferenceWork } from "../support/reference-work.js";
+import { RelativeTime } from "../support/relative-time.js";
 
 @TestClass
 export class TextDiffTimingTests {
-  private static readonly LINES_MILLISECONDS: number = 15_000;
-  private static readonly REPETITIVE_MILLISECONDS: number = 30_000;
-  private static readonly CHARACTERS_MILLISECONDS: number = 18_000;
+  private static readonly LINES_RATIO: number = 48;
+  private static readonly REPETITIVE_RATIO: number = 106;
+  private static readonly CHARACTERS_RATIO: number = 58;
   private static readonly MOVED_BLOCKS_CHANGES: number = 100_000;
-  private static readonly WHY: string = "a timing test, bounded at more than twice this test's time on the slowest CI target, since that target's time doubles between runs as other test files share its cores";
-  private static readonly CAP_WHY: string = "and below the call's time with the cost cap off";
+  private static readonly WHY: string = "a timing test, bounded by a ratio to a reference work of the language's built-ins over 1,000,000 lines, a Map of them and a sorted copy, which runs no diff code, timed just before it in the same process, so the runner's speed cancels out; the bound is three times the slowest ratio in two CI runs on all six targets, with coverage on, a margin for a runner whose other test files share its cores";
+  private static readonly CAP_WHY: string = "and below the ratio with the cost cap off";
 
   @TestMethod
-  public diffsTwo1000000LineTextsWithScatteredChangesWithinTheTimeOfALargeDiff(): void {
+  public diffsTwo1000000LineTextsWithScatteredChangesWithinARatioToTheTimeOfTheReferenceWork(): void {
+    const reference: ReferenceWork = new ReferenceWork();
     const original: readonly string[] = LargeTexts.uniqueLines(1_000_000);
     const modified: readonly string[] = LargeTexts.scattered(original, 0.001, 1, "ours");
 
-    const diff: Timed<readonly DiffChange[]> = Timed.of(() => TextDiff.lines(original, modified));
+    const diff: RelativeTime<readonly DiffChange[]> = RelativeTime.of(() => reference.run(), () => TextDiff.lines(original, modified));
 
     Assert.isTrue(diff.value.length > 0);
-    Assert.isTrue(diff.milliseconds < TextDiffTimingTests.LINES_MILLISECONDS, `The diff took ${diff.milliseconds} ms; ${TextDiffTimingTests.WHY}.`);
+    Assert.isTrue(diff.ratio < TextDiffTimingTests.LINES_RATIO, `${diff.format("million-line diff")}; ${TextDiffTimingTests.WHY}.`);
   }
 
   @TestMethod
-  public diffsTwo100000LineRepetitiveTextsWithHalfTheirLinesChangedWithinTheTimeTheCostCapKeeps(): void {
+  public diffsTwo100000LineRepetitiveTextsWithHalfTheirLinesChangedWithinTheRatioTheCostCapKeeps(): void {
+    const reference: ReferenceWork = new ReferenceWork();
     const original: readonly string[] = LargeTexts.repetitive(100_000);
     const modified: readonly string[] = LargeTexts.changedHalf(original, 3);
 
-    const diff: Timed<readonly DiffChange[]> = Timed.of(() => TextDiff.lines(original, modified));
+    const diff: RelativeTime<readonly DiffChange[]> = RelativeTime.of(() => reference.run(), () => TextDiff.lines(original, modified));
 
     Assert.isTrue(diff.value.length > 0);
-    Assert.isTrue(diff.milliseconds < TextDiffTimingTests.REPETITIVE_MILLISECONDS, `The diff took ${diff.milliseconds} ms; ${TextDiffTimingTests.WHY}, ${TextDiffTimingTests.CAP_WHY}.`);
+    Assert.isTrue(diff.ratio < TextDiffTimingTests.REPETITIVE_RATIO, `${diff.format("repetitive diff")}; ${TextDiffTimingTests.WHY}, ${TextDiffTimingTests.CAP_WHY}.`);
   }
 
   @TestMethod
-  public diffsTwo5000000CharacterTextsWithAHundredthOfTheirCharactersChangedWithinTheTimeTheCostCapKeeps(): void {
+  public diffsTwo5000000CharacterTextsWithAHundredthOfTheirCharactersChangedWithinTheRatioTheCostCapKeeps(): void {
+    const reference: ReferenceWork = new ReferenceWork();
     const original: string = LargeTexts.characters(5_000_000, 4);
     const modified: string = LargeTexts.changedHundredth(original, 5);
 
-    const diff: Timed<readonly DiffChange[]> = Timed.of(() => TextDiff.characters(original, modified));
+    const diff: RelativeTime<readonly DiffChange[]> = RelativeTime.of(() => reference.run(), () => TextDiff.characters(original, modified));
 
     Assert.isTrue(diff.value.length > 0);
-    Assert.isTrue(diff.milliseconds < TextDiffTimingTests.CHARACTERS_MILLISECONDS, `The diff took ${diff.milliseconds} ms; ${TextDiffTimingTests.WHY}, ${TextDiffTimingTests.CAP_WHY}.`);
+    Assert.isTrue(diff.ratio < TextDiffTimingTests.CHARACTERS_RATIO, `${diff.format("character diff")}; ${TextDiffTimingTests.WHY}, ${TextDiffTimingTests.CAP_WHY}.`);
   }
 
   @TestMethod
