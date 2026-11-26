@@ -9,20 +9,11 @@
 import { Assert, TestClass, TestMethod } from "@noldova/context.testing";
 import { type DiffChange, TextDiff } from "@noldova/diff";
 
-import { LargeTexts } from "../support/large-texts.js";
 import { Random } from "../support/random.js";
 import { ReadCounter } from "../support/read-counter.js";
-import { Timed } from "../support/timed.js";
-
-const RANDOM_RANGE: number = 2_147_483_648;
 
 @TestClass
 export class TextDiffTests {
-  private static readonly LINES_MILLISECONDS: number = 16_000;
-  private static readonly REPETITIVE_MILLISECONDS: number = 20_000;
-  private static readonly CHARACTERS_MILLISECONDS: number = 20_000;
-  private static readonly MOVED_BLOCKS_CHANGES: number = 190_000;
-
   @TestMethod
   public numbersValuesInOrderExtendingTheNumbersTheMapHolds(): void {
     const ids: Map<string, number> = new Map<string, number>();
@@ -113,51 +104,6 @@ export class TextDiffTests {
   }
 
   @TestMethod
-  public diffsTwo1000000LineTextsWithScatteredChangesWithinTheTimeOfALargeDiff(): void {
-    const original: readonly string[] = LargeTexts.uniqueLines(1_000_000);
-    const modified: readonly string[] = LargeTexts.scattered(original, 0.001, 1, "ours");
-
-    const diff: Timed<readonly DiffChange[]> = Timed.of(() => TextDiff.lines(original, modified));
-
-    Assert.isTrue(diff.value.length > 0);
-    Assert.isTrue(diff.milliseconds < TextDiffTests.LINES_MILLISECONDS, `The diff took ${diff.milliseconds} ms.`);
-  }
-
-  @TestMethod
-  public diffsTwo100000LineRepetitiveTextsWithHalfTheirLinesChangedWithinTheTimeTheCostCapKeeps(): void {
-    const original: readonly string[] = LargeTexts.repetitive(100_000);
-    const modified: readonly string[] = LargeTexts.changedHalf(original, 3);
-
-    const diff: Timed<readonly DiffChange[]> = Timed.of(() => TextDiff.lines(original, modified));
-
-    Assert.isTrue(diff.value.length > 0);
-    Assert.isTrue(diff.milliseconds < TextDiffTests.REPETITIVE_MILLISECONDS, `The diff took ${diff.milliseconds} ms.`);
-  }
-
-  @TestMethod
-  public diffsTwo5000000CharacterTextsWithAHundredthOfTheirCharactersChangedWithinTheTimeTheCostCapKeeps(): void {
-    const original: string = LargeTexts.characters(5_000_000, 4);
-    const modified: string = LargeTexts.changedHundredth(original, 5);
-
-    const diff: Timed<readonly DiffChange[]> = Timed.of(() => TextDiff.characters(original, modified));
-
-    Assert.isTrue(diff.value.length > 0);
-    Assert.isTrue(diff.milliseconds < TextDiffTests.CHARACTERS_MILLISECONDS, `The diff took ${diff.milliseconds} ms.`);
-  }
-
-  @TestMethod
-  public diffsA800000WordTextWithMovedBlocksInAsFewChangesAsTheWordsFirstPassKeeps(): void {
-    const words: readonly string[] = LargeTexts.words(800_000, 6);
-    const original: string = words.join(" ");
-    const modified: string = LargeTexts.blocksMoved(words, 400, 200, 7).join(" ");
-
-    const changes: readonly DiffChange[] = TextDiff.characters(original, modified);
-
-    Assert.isTrue(changes.length > 0);
-    Assert.isTrue(changes.length < TextDiffTests.MOVED_BLOCKS_CHANGES, `The diff gave ${changes.length} changes.`);
-  }
-
-  @TestMethod
   public keepsDiffsOfRandomTextsValidOnceTheCostCapEndsTheSearch(): void {
     const random: Random = new Random(23);
     for (let round = 0; round < 6; round++) {
@@ -245,7 +191,7 @@ export class TextDiffTests {
   private static repetitiveReadsPerLine(count: number): number {
     const random: Random = new Random(7);
     const original: readonly string[] = Array.from({ length: count }, (_, i) => `item${i % 10}`);
-    const modified: readonly string[] = original.map(t => TextDiffTests.below(random, 2) === 0 ? `other${TextDiffTests.below(random, 10)}` : t);
+    const modified: readonly string[] = original.map(t => random.below(2) === 0 ? `other${random.below(10)}` : t);
     const counter: ReadCounter = new ReadCounter();
     const changes: readonly DiffChange[] = counter.diffsOf(() => TextDiff.lines(original, modified));
     Assert.areEqual(modified.join("\n"), TextDiffTests.applied(original, modified, changes).join("\n"));
@@ -255,16 +201,12 @@ export class TextDiffTests {
   private static characterReadsPerCharacter(count: number): number {
     const random: Random = new Random(9);
     const letters: string = "abcdefghijklmnopqrstuvwxyz ";
-    const original: string = Array.from({ length: count }, () => letters[TextDiffTests.below(random, letters.length)]).join("");
-    const modified: string = Array.from(original, t => TextDiffTests.below(random, 100) === 0 ? "#" : t).join("");
+    const original: string = Array.from({ length: count }, () => letters[random.below(letters.length)]).join("");
+    const modified: string = Array.from(original, t => random.below(100) === 0 ? "#" : t).join("");
     const counter: ReadCounter = new ReadCounter();
     const changes: readonly DiffChange[] = counter.diffsOf(() => TextDiff.characters(original, modified));
     Assert.areEqual(modified, TextDiffTests.applied([...original], [...modified], changes).join(""));
     return counter.reads / (original.length + modified.length);
-  }
-
-  private static below(random: Random, limit: number): number {
-    return Math.floor(random.next(RANDOM_RANGE) / RANDOM_RANGE * limit);
   }
 
   private static spans(changes: readonly DiffChange[]): string {

@@ -47,7 +47,7 @@ npm test
 The build writes the checkout's head commit into the package's `package.json` as `gitHead`, and fails before building when git can't read it.
 `npm run build --silent -- --list-copies` builds nothing and prints each file the build copies into the package, one per line, with tabs between its source, the package's name and its path inside the package, and then `end of copies`.
 `npm test` compiles the package's tests and the scripts' tests, runs them, which are `@noldova/context.testing` test classes, against the installed package with a 100% coverage gate, and then prints its ten slowest tests with their times, which fail nothing; `npm test -- <filter>` runs only the tests whose package, file, class or method name holds the filter, without the coverage gate.
-`npm run test:timing`, after `npm test`, is the timing check: it runs the built suite three times without coverage, takes each test file's median time, and fails a file over 2 seconds, or a listed file over the time the list gives it, each with a margin of 50%; this README lists no file slower than that.
+`npm run test:timing`, after `npm test`, is the timing check: it runs the built suite three times without coverage, takes each test file's median time, and fails a file over 2 seconds, or a listed file over the time the list gives it, each with a margin of 50%; the files slower than that are listed under [Checks](#checks).
 The entry points live in `scripts/`, the same scripts as CONTEXT's.
 Two options shorten `npm test`'s output, as the CI run uses them:
 
@@ -64,6 +64,13 @@ The suite has one hang limit, 60 seconds, which `scripts/suite-script.ts` sets f
 
 Every pull request runs "Check / Linked issue", which needs the pull request to name the issue it resolves, and "Build and test", which builds and tests on Linux, Windows and macOS, each on x64 and arm64, as CONTEXT's does.
 Build and test also checks that a second build packs the same archive, and that the archive passes the release's checks.
+
+Test files slower than the timing check's budget:
+
+| File | Time | Why |
+|---|---|---|
+| `noldova.diff/services/text-diff-timing.test.js` | 4600 ms | Its timing tests diff a million lines, 5 million characters and 100,000 repetitive lines to bound the diff's time and its cost cap, and a 200,000-word text with moved blocks to count the words-first pass's changes. |
+| `noldova.diff/services/merge3-timing.test.js` | 3100 ms | Its timing test merges three million-line texts to bound the merge's time. |
 
 ## Releases
 

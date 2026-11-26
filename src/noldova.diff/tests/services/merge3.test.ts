@@ -9,15 +9,11 @@
 import { Assert, TestClass, TestMethod } from "@noldova/context.testing";
 import { Merge3, type MergeRegion, MergeRegionKind } from "@noldova/diff";
 
-import { LargeTexts } from "../support/large-texts.js";
 import { Random } from "../support/random.js";
 import { ReadCounter } from "../support/read-counter.js";
-import { Timed } from "../support/timed.js";
 
 @TestClass
 export class Merge3Tests {
-  private static readonly MERGE_MILLISECONDS: number = 28_000;
-
   @TestMethod
   public keepsTextsThatNoSideChangedAsOneUnchangedRegionAndGivesNoneForThreeEmptyTexts(): void {
     Assert.areEqual("Unchanged 0-2 0-2 0-2", Merge3Tests.describe(Merge3Tests.check(["a", "b"], ["a", "b"], ["a", "b"])));
@@ -54,18 +50,6 @@ export class Merge3Tests {
 
     Assert.isTrue(full < 10, `The merge read each line ${full.toFixed(2)} times.`);
     Assert.isTrue(full < half * 1.25, `The merge read each line ${half.toFixed(2)} times at 50,000 lines and ${full.toFixed(2)} times at 100,000.`);
-  }
-
-  @TestMethod
-  public mergesThree1000000LineTextsWithScatteredChangesWithinTheTimeOfALargeMerge(): void {
-    const base: readonly string[] = LargeTexts.uniqueLines(1_000_000);
-    const ours: readonly string[] = LargeTexts.scattered(base, 0.001, 1, "ours");
-    const theirs: readonly string[] = LargeTexts.scattered(base, 0.001, 2, "theirs");
-
-    const merge: Timed<readonly MergeRegion[]> = Timed.of(() => Merge3.lines(base, ours, theirs));
-
-    Assert.isTrue(merge.value.length > 1);
-    Assert.isTrue(merge.milliseconds < Merge3Tests.MERGE_MILLISECONDS, `The merge took ${merge.milliseconds} ms.`);
   }
 
   private static same(expected: readonly string[], actual: readonly string[]): void {
