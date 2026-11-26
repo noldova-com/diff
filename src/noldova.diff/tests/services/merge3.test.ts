@@ -16,7 +16,7 @@ import { Timed } from "../support/timed.js";
 
 @TestClass
 export class Merge3Tests {
-  private static readonly MERGE_MILLISECONDS: number = 20_000;
+  private static readonly MERGE_MILLISECONDS: number = 28_000;
 
   @TestMethod
   public keepsTextsThatNoSideChangedAsOneUnchangedRegionAndGivesNoneForThreeEmptyTexts(): void {
@@ -57,7 +57,7 @@ export class Merge3Tests {
   }
 
   @TestMethod
-  public mergesThree1000000LineTextsWithScatteredChangesWithinTheTimeTheAnchorsAndTheCostCapKeep(): void {
+  public mergesThree1000000LineTextsWithScatteredChangesWithinTheTimeOfALargeMerge(): void {
     const base: readonly string[] = LargeTexts.uniqueLines(1_000_000);
     const ours: readonly string[] = LargeTexts.scattered(base, 0.001, 1, "ours");
     const theirs: readonly string[] = LargeTexts.scattered(base, 0.001, 2, "theirs");

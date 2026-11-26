@@ -18,7 +18,7 @@ const RANDOM_RANGE: number = 2_147_483_648;
 
 @TestClass
 export class TextDiffTests {
-  private static readonly LINES_MILLISECONDS: number = 20_000;
+  private static readonly LINES_MILLISECONDS: number = 16_000;
   private static readonly REPETITIVE_MILLISECONDS: number = 20_000;
   private static readonly CHARACTERS_MILLISECONDS: number = 20_000;
   private static readonly MOVED_BLOCKS_CHANGES: number = 190_000;
@@ -113,7 +113,7 @@ export class TextDiffTests {
   }
 
   @TestMethod
-  public diffsTwo1000000LineTextsWithScatteredChangesWithinTheTimeTheAnchorsAndTheCostCapKeep(): void {
+  public diffsTwo1000000LineTextsWithScatteredChangesWithinTheTimeOfALargeDiff(): void {
     const original: readonly string[] = LargeTexts.uniqueLines(1_000_000);
     const modified: readonly string[] = LargeTexts.scattered(original, 0.001, 1, "ours");
 
