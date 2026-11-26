@@ -58,7 +58,7 @@ npm test -- --skip-test-details --skip-coverage-details
 - `--skip-test-details` hides the line of each passing test; failures, skipped tests and the totals still print.
 - `--skip-coverage-details` hides the coverage rows of fully covered files; files with gaps and the overall row still print.
 
-The suite has one hang limit, 75 seconds, which `scripts/suite-script.ts` sets for every run of it; no test carries a limit of its own. It is at least three times the slowest test's slowest CI run, the million-line merge's 23.4 seconds on macOS x64.
+The suite has one hang limit, 120 seconds, which `scripts/suite-script.ts` sets for every run of it; no test carries a limit of its own. It is at least three times the slowest test's slowest run on main, the million-line merge's 39.9 seconds on macOS x64 in run 45881050586.
 
 ## Checks
 
@@ -69,8 +69,8 @@ Test files slower than the timing check's budget:
 
 | File | Time | Why |
 |---|---|---|
-| `noldova.diff/services/text-diff-timing.test.js` | 4600 ms | Its timing tests diff a million lines, 5 million characters and 100,000 repetitive lines to bound the diff's time and its cost cap, and a 100,000-word text with moved blocks to count the words-first pass's changes. |
-| `noldova.diff/services/merge3-timing.test.js` | 3100 ms | Its timing test merges three million-line texts to bound the merge's time. |
+| `noldova.diff/services/text-diff-timing.test.js` | 4600 ms | Its timing tests diff a million lines, 5 million characters and 100,000 repetitive lines each bounded by a ratio to a 250,000-line reference diff timed just before it, to bound the diff's time and its cost cap, and a 100,000-word text with moved blocks to count the words-first pass's changes. |
+| `noldova.diff/services/merge3-timing.test.js` | 3100 ms | Its timing test merges three million-line texts to bound the merge's time by a ratio to the same 250,000-line reference diff. |
 
 ## Releases
 
