@@ -15,11 +15,11 @@ import { RelativeTime } from "../support/relative-time.js";
 
 @TestClass
 export class TextDiffTimingTests {
-  private static readonly LINES_RATIO: number = 65;
-  private static readonly REPETITIVE_RATIO: number = 20;
-  private static readonly CHARACTERS_RATIO: number = 16;
+  private static readonly LINES_RATIO: number = 48;
+  private static readonly REPETITIVE_RATIO: number = 106;
+  private static readonly CHARACTERS_RATIO: number = 58;
   private static readonly MOVED_BLOCKS_CHANGES: number = 100_000;
-  private static readonly WHY: string = "a timing test, bounded by a ratio to a reference work of the language's built-ins over 1,000,000 lines, a Map of them and a sorted copy, which runs no diff code, timed just before it in the same process, so the runner's speed cancels out; the bound is the slowest ratio in several runs on each test machine, Linux, macOS x64 and Windows, times three, a margin for a CI runner whose other test files share its cores";
+  private static readonly WHY: string = "a timing test, bounded by a ratio to a reference work of the language's built-ins over 1,000,000 lines, a Map of them and a sorted copy, which runs no diff code, timed just before it in the same process, so the runner's speed cancels out; the bound is three times the slowest ratio in two CI runs on all six targets, with coverage on, a margin for a runner whose other test files share its cores";
   private static readonly CAP_WHY: string = "and below the ratio with the cost cap off";
 
   @TestMethod
