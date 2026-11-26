@@ -9,31 +9,49 @@
 import "@noldova/context.core";
 
 import { DiffChange } from "../models/diff-change.js";
+import { DiffRegion } from "../models/diff-region.js";
 import { DiffSplit } from "../models/diff-split.js";
 
 export class SequenceDiff {
   private static readonly ANCHORED_LENGTH: number = 2048;
+  private static readonly COST_LIMIT: number = 256;
 
   private readonly original: Int32Array;
   private readonly modified: Int32Array;
   private readonly changes: DiffChange[] = [];
+  private readonly originalCounts: Int32Array;
+  private readonly modifiedCounts: Int32Array;
+  private readonly originalCounted: Int32Array;
+  private readonly modifiedCounted: Int32Array;
+  private readonly modifiedPositions: Int32Array;
+  private generation: number = 0;
 
   private constructor(original: Int32Array, modified: Int32Array) {
     this.original = original;
     this.modified = modified;
+    const size: number = Math.max(SequenceDiff.largest(original), SequenceDiff.largest(modified)) + 1;
+    this.originalCounts = new Int32Array(size);
+    this.modifiedCounts = new Int32Array(size);
+    this.originalCounted = new Int32Array(size);
+    this.modifiedCounted = new Int32Array(size);
+    this.modifiedPositions = new Int32Array(size);
   }
 
   public static compute(original: Int32Array, modified: Int32Array): readonly DiffChange[] {
     const diff: SequenceDiff = new SequenceDiff(original, modified);
-    diff.run(0, original.length, 0, modified.length);
+    const regions: DiffRegion[] = [new DiffRegion(0, original.length, 0, modified.length, true)];
+    for (let region: DiffRegion | undefined = regions.pop(); !Object.isUndefined(region); region = regions.pop()) {
+      for (const part of diff.split(region).toReversed())
+        regions.push(part);
+    }
     return SequenceDiff.coalesce(diff.changes);
   }
 
-  private run(originalStart: number, originalEnd: number, modifiedStart: number, modifiedEnd: number): void {
-    let aLo: number = originalStart;
-    let aHi: number = originalEnd;
-    let bLo: number = modifiedStart;
-    let bHi: number = modifiedEnd;
+  private split(region: DiffRegion): readonly DiffRegion[] {
+    let aLo: number = region.originalStart;
+    let aHi: number = region.originalEnd;
+    let bLo: number = region.modifiedStart;
+    let bHi: number = region.modifiedEnd;
     while (aLo < aHi && bLo < bHi && this.original[aLo] === this.modified[bLo]) {
       aLo++;
       bLo++;
@@ -45,33 +63,31 @@ export class SequenceDiff {
     if (aLo === aHi || bLo === bHi) {
       if (aLo !== aHi || bLo !== bHi)
         this.changes.push(new DiffChange(aLo, aHi, bLo, bHi));
-      return;
+      return [];
     }
-    if (aHi - aLo + bHi - bLo > SequenceDiff.ANCHORED_LENGTH) {
-      const anchors: readonly DiffSplit[] = this.anchors(aLo, aHi, bLo, bHi);
-      if (anchors.length > 0) {
-        let original: number = aLo;
-        let modified: number = bLo;
-        for (const anchor of anchors) {
-          this.run(original, anchor.original, modified, anchor.modified);
-          original = anchor.original + 1;
-          modified = anchor.modified + 1;
-        }
-        this.run(original, aHi, modified, bHi);
-        return;
+    const anchors: readonly DiffSplit[] = region.canAnchor && aHi - aLo + bHi - bLo > SequenceDiff.ANCHORED_LENGTH ? this.anchors(aLo, aHi, bLo, bHi) : [];
+    if (anchors.length > 0) {
+      const parts: DiffRegion[] = [];
+      let original: number = aLo;
+      let modified: number = bLo;
+      for (const anchor of anchors) {
+        parts.push(new DiffRegion(original, anchor.original, modified, anchor.modified, true));
+        original = anchor.original + 1;
+        modified = anchor.modified + 1;
       }
+      parts.push(new DiffRegion(original, aHi, modified, bHi, true));
+      return parts;
     }
     const split: DiffSplit = this.bisect(aLo, aHi, bLo, bHi);
-    this.run(aLo, split.original, bLo, split.modified);
-    this.run(split.original, aHi, split.modified, bHi);
+    return [new DiffRegion(aLo, split.original, bLo, split.modified, false), new DiffRegion(split.original, aHi, split.modified, bHi, false)];
   }
 
   private bisect(aLo: number, aHi: number, bLo: number, bHi: number): DiffSplit {
     const n: number = aHi - aLo;
     const m: number = bHi - bLo;
-    const maxD: number = Math.ceil((n + m) / 2);
-    const offset: number = maxD;
-    const size: number = 2 * maxD + 2;
+    const limit: number = Math.min(Math.ceil((n + m) / 2), SequenceDiff.COST_LIMIT);
+    const offset: number = limit;
+    const size: number = 2 * limit + 2;
     const forward: Int32Array = new Int32Array(size).fill(-1);
     const backward: Int32Array = new Int32Array(size).fill(-1);
     forward[offset + 1] = 0;
@@ -82,7 +98,9 @@ export class SequenceDiff {
     let forwardEnd: number = 0;
     let backwardStart: number = 0;
     let backwardEnd: number = 0;
-    for (let d = 0; ; d++) {
+    let furthest: DiffSplit = new DiffSplit(aLo, bLo);
+    let reach: number = 0;
+    for (let d = 0; d <= limit; d++) {
       for (let k = -d + forwardStart; k <= d - forwardEnd; k += 2) {
         const index: number = offset + k;
         let x: number = k === -d || (k !== d && SequenceDiff.at(forward, index - 1) < SequenceDiff.at(forward, index + 1))
@@ -98,10 +116,14 @@ export class SequenceDiff {
           forwardEnd += 2;
         else if (y > m)
           forwardStart += 2;
-        else if (checksForward) {
+        else {
           const other: number = offset + delta - k;
-          if (other >= 0 && other < size && SequenceDiff.at(backward, other) !== -1 && x >= n - SequenceDiff.at(backward, other))
+          if (checksForward && other >= 0 && other < size && SequenceDiff.at(backward, other) !== -1 && x >= n - SequenceDiff.at(backward, other))
             return new DiffSplit(aLo + x, bLo + y);
+          if (d === limit && x + y > reach) {
+            reach = x + y;
+            furthest = new DiffSplit(aLo + x, bLo + y);
+          }
         }
       }
       for (let k = -d + backwardStart; k <= d - backwardEnd; k += 2) {
@@ -119,33 +141,42 @@ export class SequenceDiff {
           backwardEnd += 2;
         else if (y > m)
           backwardStart += 2;
-        else if (!checksForward) {
+        else {
           const other: number = offset + delta - k;
-          if (other >= 0 && other < size && SequenceDiff.at(forward, other) !== -1) {
-            const forwardX: number = SequenceDiff.at(forward, other);
-            if (forwardX >= n - x)
-              return new DiffSplit(aLo + forwardX, bLo + forwardX - (other - offset));
+          if (!checksForward && other >= 0 && other < size && SequenceDiff.at(forward, other) !== -1 && SequenceDiff.at(forward, other) >= n - x)
+            return new DiffSplit(aLo + SequenceDiff.at(forward, other), bLo + SequenceDiff.at(forward, other) - (other - offset));
+          if (d === limit && x + y > reach) {
+            reach = x + y;
+            furthest = new DiffSplit(aHi - x, bHi - y);
           }
         }
       }
     }
+    return furthest;
   }
 
   private anchors(aLo: number, aHi: number, bLo: number, bHi: number): readonly DiffSplit[] {
-    const originalCounts: Map<number, number> = SequenceDiff.counts(this.original, aLo, aHi);
-    const modifiedCounts: Map<number, number> = SequenceDiff.counts(this.modified, bLo, bHi);
-    const modifiedPositions: Map<number, number> = new Map<number, number>();
-    for (let index = bLo; index < bHi; index++)
-      modifiedPositions.set(SequenceDiff.at(this.modified, index), index);
-    const originalAnchors: number[] = [];
-    const modifiedAnchors: number[] = [];
+    this.generation++;
+    const values: Int32Array = new Int32Array(aHi - aLo);
     for (let index = aLo; index < aHi; index++) {
       const value: number = SequenceDiff.at(this.original, index);
-      if (originalCounts.get(value) === 1 && modifiedCounts.get(value) === 1) {
-        originalAnchors.push(index);
-        modifiedAnchors.push(Number(modifiedPositions.get(value)));
-      }
+      values[index - aLo] = value;
+      this.count(this.originalCounts, this.originalCounted, value);
     }
+    for (let index = bLo; index < bHi; index++) {
+      const value: number = SequenceDiff.at(this.modified, index);
+      this.count(this.modifiedCounts, this.modifiedCounted, value);
+      this.modifiedPositions[value] = index;
+    }
+    const originalAnchors: number[] = [];
+    const modifiedAnchors: number[] = [];
+    values.forEach((value, index) => {
+      if (SequenceDiff.at(this.originalCounts, value) === 1 && SequenceDiff.at(this.modifiedCounted, value) === this.generation
+        && SequenceDiff.at(this.modifiedCounts, value) === 1) {
+        originalAnchors.push(aLo + index);
+        modifiedAnchors.push(SequenceDiff.at(this.modifiedPositions, value));
+      }
+    });
     const tails: number[] = [];
     const previous: number[] = [];
     modifiedAnchors.forEach((position, index) => {
@@ -167,13 +198,20 @@ export class SequenceDiff {
     return anchors.reverse();
   }
 
-  private static counts(values: Int32Array, start: number, end: number): Map<number, number> {
-    const counts: Map<number, number> = new Map<number, number>();
-    for (let index = start; index < end; index++) {
-      const value: number = SequenceDiff.at(values, index);
-      counts.set(value, (counts.get(value) ?? 0) + 1);
+  private count(counts: Int32Array, counted: Int32Array, value: number): void {
+    if (SequenceDiff.at(counted, value) === this.generation)
+      counts[value] = SequenceDiff.at(counts, value) + 1;
+    else {
+      counted[value] = this.generation;
+      counts[value] = 1;
     }
-    return counts;
+  }
+
+  private static largest(values: Int32Array): number {
+    let largest: number = -1;
+    for (let index = 0; index < values.length; index++)
+      largest = Math.max(largest, SequenceDiff.at(values, index));
+    return largest;
   }
 
   private static at(values: ArrayLike<number>, index: number): number {

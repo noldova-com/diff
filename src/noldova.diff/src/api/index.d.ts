@@ -175,11 +175,14 @@ export declare class Merge3 {
 }
 
 /**
- * Shortest diffs of lines and of characters.
+ * Diffs of lines and of characters: each turns the original into the
+ * modified text, and is the shortest edit unless a limit below cuts it short.
  */
 export declare class TextDiff {
   /**
-   * Gives the shortest edit from one line sequence to another.
+   * Gives an edit from one line sequence to another: the shortest, unless a region of over 2,048 lines on both sides together is first split at
+   * the lines that occur once on each side, or a search that hasn't met its other half after 256 rounds splits where it reached furthest; the
+   * changes always turn the original into the modified lines.
    *
    * @param original The lines before.
    * @param modified The lines after.
@@ -194,7 +197,9 @@ export declare class TextDiff {
   public static lines(original: readonly string[], modified: readonly string[]): readonly DiffChange[];
 
   /**
-   * Gives the shortest edit from one string to another, by code point, as UTF-16 offsets that never split a surrogate pair.
+   * Gives an edit from one string to another, by code point, as UTF-16 offsets that never split a surrogate pair: the shortest, unless texts over
+   * 2,048 characters together are diffed by words first, then by character inside the changed words, or a search that hasn't met its other half
+   * after 256 rounds splits where it reached furthest; the changes always turn the original into the modified text.
    *
    * @param original The text before.
    * @param modified The text after.
