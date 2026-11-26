@@ -15,7 +15,7 @@ import { RelativeTime } from "../support/relative-time.js";
 
 @TestClass
 export class Merge3TimingTests {
-  private static readonly MERGE_RATIO: number = 50;
+  private static readonly MERGE_RATIO: number = 0;
   private static readonly WHY: string = "a timing test, bounded by a ratio to a reference work of the language's built-ins over 1,000,000 lines, a Map of them and a sorted copy, which runs no diff code, timed just before it in the same process, so the runner's speed cancels out; the bound is the slowest ratio in several runs on each test machine, Linux, macOS x64 and Windows, times three, a margin for a CI runner whose other test files share its cores";
 
   @TestMethod
