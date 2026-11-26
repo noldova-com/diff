@@ -32,6 +32,15 @@ export class StringIdsTests {
   }
 
   @TestMethod
+  public extendsTheNumbersOfTheMapItIsGiven(): void {
+    const map: Map<string, number> = new Map<string, number>([["b", 0]]);
+
+    Assert.areEqual("1,0,1", new StringIds(map).encode(["a", "b", "a"]).join(","));
+    Assert.areEqual("0,1", [...map.values()].join(","));
+    Assert.areEqual("a", [...map.keys()].at(-1));
+  }
+
+  @TestMethod
   public numbersTheEmptyStringAndAnEmptyListLikeAnyOther(): void {
     const ids: StringIds = new StringIds();
 

@@ -38,16 +38,7 @@ export class TextDiff {
   }
 
   public static encode(values: readonly string[], ids: Map<string, number>): Int32Array {
-    const encoded: Int32Array = new Int32Array(values.length);
-    values.forEach((value, index) => {
-      let id: number | undefined = ids.get(value);
-      if (Object.isUndefined(id)) {
-        id = ids.size;
-        ids.set(value, id);
-      }
-      encoded[index] = id;
-    });
-    return encoded;
+    return new StringIds(ids).encode(values);
   }
 
   private static points(original: string, modified: string, originalBase: number, modifiedBase: number): readonly DiffChange[] {

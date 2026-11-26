@@ -6,7 +6,7 @@ Each version's section is written by the pull request that changes the version, 
 
 ## 0.0.2
 
-Diffs of texts with many changes stay fast.
+Diffs of texts with many changes stay fast, and give an edit that turns the original into the modified text rather than always the shortest one.
 
 - A line diff ends its search for the shortest edit after a fixed cost and splits where it reached furthest, so texts over a few repeated lines with half their lines changed diff in well under a second; the changes still turn the original into the modified text.
 - A character diff of a text over 2,048 characters diffs its words first, then the characters inside the changed words, so a 5,000,000-character text with many changes diffs in under a second.

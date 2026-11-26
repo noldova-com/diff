@@ -16,6 +16,7 @@ declare module "@noldova/diff/services/sequence-diff.js" {
 
 declare module "@noldova/diff/services/string-ids.js" {
   export class StringIds {
+    public constructor(ids?: Map<string, number>);
     public encode(values: readonly string[]): Int32Array;
   }
 }

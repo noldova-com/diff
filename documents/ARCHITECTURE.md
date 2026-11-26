@@ -38,7 +38,7 @@ The tests count the work rather than time it, so a slower or busier machine can'
 
 ## Decisions
 
-- **Myers with patience anchors.** `TextDiff.lines` and `TextDiff.characters` give the shortest edit by Myers' linear-space algorithm.
+- **Myers with patience anchors.** `TextDiff.lines` and `TextDiff.characters` diff by Myers' linear-space algorithm, which gives the shortest edit unless one of the limits below cuts it short; the changes always turn the original into the modified text.
   A region over 2,048 lines first splits at lines that occur once on each side, in their longest common order, as patience diff does, so a 100,000-line diff stays near-linear, at the cost of a shortest edit for such regions.
 - **A cost cap.** A bisect that hasn't met its other half after 256 rounds splits at the point either search reached furthest, so texts with many changes stay near-linear, at the cost of a shortest edit for such regions; the changes still turn the original into the modified text.
   The regions are diffed from a work list rather than by recursion, so a long text can't overflow the stack, and a region a bisect made doesn't look for anchors again.
