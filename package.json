@@ -17,6 +17,7 @@
     "@noldova/context.collections": "0.0.13",
     "@noldova/context.core": "0.0.13",
     "@noldova/context.exceptions": "0.0.13",
+    "@noldova/context.processes": "0.0.13",
     "@noldova/context.testing": "0.0.13",
     "@noldova/context.text": "0.0.13",
     "@types/node": "26.6.6",
