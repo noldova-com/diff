@@ -12,8 +12,6 @@ import { type DiffChange, TextDiff } from "@noldova/diff";
 import { Random } from "../support/random.js";
 import { ReadCounter } from "../support/read-counter.js";
 
-const RANDOM_RANGE: number = 2_147_483_648;
-
 @TestClass
 export class TextDiffTests {
   @TestMethod
@@ -193,7 +191,7 @@ export class TextDiffTests {
   private static repetitiveReadsPerLine(count: number): number {
     const random: Random = new Random(7);
     const original: readonly string[] = Array.from({ length: count }, (_, i) => `item${i % 10}`);
-    const modified: readonly string[] = original.map(t => TextDiffTests.below(random, 2) === 0 ? `other${TextDiffTests.below(random, 10)}` : t);
+    const modified: readonly string[] = original.map(t => random.below(2) === 0 ? `other${random.below(10)}` : t);
     const counter: ReadCounter = new ReadCounter();
     const changes: readonly DiffChange[] = counter.diffsOf(() => TextDiff.lines(original, modified));
     Assert.areEqual(modified.join("\n"), TextDiffTests.applied(original, modified, changes).join("\n"));
@@ -203,16 +201,12 @@ export class TextDiffTests {
   private static characterReadsPerCharacter(count: number): number {
     const random: Random = new Random(9);
     const letters: string = "abcdefghijklmnopqrstuvwxyz ";
-    const original: string = Array.from({ length: count }, () => letters[TextDiffTests.below(random, letters.length)]).join("");
-    const modified: string = Array.from(original, t => TextDiffTests.below(random, 100) === 0 ? "#" : t).join("");
+    const original: string = Array.from({ length: count }, () => letters[random.below(letters.length)]).join("");
+    const modified: string = Array.from(original, t => random.below(100) === 0 ? "#" : t).join("");
     const counter: ReadCounter = new ReadCounter();
     const changes: readonly DiffChange[] = counter.diffsOf(() => TextDiff.characters(original, modified));
     Assert.areEqual(modified, TextDiffTests.applied([...original], [...modified], changes).join(""));
     return counter.reads / (original.length + modified.length);
-  }
-
-  private static below(random: Random, limit: number): number {
-    return Math.floor(random.next(RANDOM_RANGE) / RANDOM_RANGE * limit);
   }
 
   private static spans(changes: readonly DiffChange[]): string {
